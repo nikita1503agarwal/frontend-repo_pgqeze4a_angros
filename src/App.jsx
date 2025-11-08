@@ -3,6 +3,7 @@ import Hero from './components/Hero';
 import ContractBar from './components/ContractBar';
 import HowItWorks from './components/HowItWorks';
 import WhySolana from './components/WhySolana';
+import Integrations from './components/Integrations';
 import Waitlist from './components/Waitlist';
 import FAQ from './components/FAQ';
 import CTA from './components/CTA';
@@ -18,6 +19,7 @@ export default function App() {
         </div>
         <HowItWorks />
         <WhySolana />
+        <Integrations />
         <Waitlist />
         <CTA />
         <FAQ />
