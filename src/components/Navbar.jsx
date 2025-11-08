@@ -1,23 +1,38 @@
-import React from 'react'
+import { useState } from 'react';
+import { Menu, X, Rocket } from 'lucide-react';
 
 export default function Navbar() {
+  const [open, setOpen] = useState(false);
+
   return (
-    <header className="w-full sticky top-0 z-20 backdrop-blur supports-[backdrop-filter]:bg-black/30 bg-black/50">
-      <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
-        <a href="#" className="text-white font-semibold text-lg tracking-tight">Polytoly</a>
-        <nav className="hidden sm:flex items-center gap-6 text-sm">
-          <a href="#markets" className="text-zinc-300 hover:text-white transition-colors">Markets</a>
-          <a href="#how" className="text-zinc-300 hover:text-white transition-colors">How it Works</a>
-          <a href="#waitlist" className="inline-flex items-center px-3 py-1.5 rounded-md font-medium text-white bg-gradient-to-r from-[#9945FF] via-[#14F195] to-[#00D18C] hover:opacity-90 transition-opacity">
-            Join Waitlist
+    <header className="fixed top-0 inset-x-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-black/40 bg-black/30 border-b border-white/10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          <a href="#" className="flex items-center gap-2 text-white font-semibold">
+            <Rocket className="h-5 w-5 text-violet-400" />
+            <span>Polytoly</span>
           </a>
-        </nav>
-        <div className="sm:hidden">
-          <a href="#waitlist" className="inline-flex items-center px-3 py-1.5 rounded-md font-medium text-white bg-gradient-to-r from-[#9945FF] via-[#14F195] to-[#00D18C] hover:opacity-90 transition-opacity">
-            Waitlist
-          </a>
+          <nav className="hidden md:flex items-center gap-8 text-sm text-white/80">
+            <a href="#how" className="hover:text-white transition">How it works</a>
+            <a href="#why" className="hover:text-white transition">Why Solana</a>
+            <a href="#waitlist" className="hover:text-white transition">Waitlist</a>
+            <a href="#faq" className="hover:text-white transition">FAQ</a>
+          </nav>
+          <button onClick={() => setOpen(!open)} className="md:hidden text-white/90 p-2 rounded hover:bg-white/10">
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
+        {open && (
+          <div className="md:hidden pb-4">
+            <nav className="grid gap-2 text-sm text-white/80">
+              <a href="#how" className="hover:text-white transition">How it works</a>
+              <a href="#why" className="hover:text-white transition">Why Solana</a>
+              <a href="#waitlist" className="hover:text-white transition">Waitlist</a>
+              <a href="#faq" className="hover:text-white transition">FAQ</a>
+            </nav>
+          </div>
+        )}
       </div>
     </header>
-  )
+  );
 }

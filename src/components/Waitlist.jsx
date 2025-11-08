@@ -1,205 +1,128 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react';
+import { Loader2, Wallet } from 'lucide-react';
 
-const ENV_BASE = import.meta.env.VITE_BACKEND_URL || ''
-
-function GradientButton({ children, className = '', ...props }) {
-  return (
-    <button
-      {...props}
-      className={`inline-flex items-center justify-center rounded-md px-5 py-3 text-sm font-medium text-white bg-gradient-to-r from-[#9945FF] via-[#14F195] to-[#00D18C] shadow-md hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
-    >
-      {children}
-    </button>
-  )
-}
+const SOL_ADDRESS_RE = /^(?=.{32,60}$)[1-9A-HJ-NP-Za-km-z]+$/;
 
 function deriveBackendBase() {
-  // Prefer explicit env var
-  if (ENV_BASE) return ENV_BASE.replace(/\/$/, '')
-  // Fallback: same host but port 8000 (works in this sandbox)
-  try {
-    const url = new URL(window.location.href)
-    return `${url.protocol}//${url.hostname}:8000`
-  } catch {
-    return ''
-  }
+  const env = import.meta.env?.VITE_BACKEND_URL;
+  if (env) return env.replace(/\/$/, '');
+  const { protocol, hostname } = window.location;
+  return `${protocol}//${hostname}:8000`;
 }
 
 export default function Waitlist() {
-  const [connectedAddress, setConnectedAddress] = useState('')
-  const [showManual, setShowManual] = useState(false)
-  const [manualAddress, setManualAddress] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const [items, setItems] = useState([])
-
-  const hasPhantom = typeof window !== 'undefined' && window.solana && window.solana.isPhantom
-
-  const backend = useMemo(() => deriveBackendBase(), [])
-
-  const isValidSolana = (addr) => /^(?=.{32,60}$)[1-9A-HJ-NP-Za-km-z]+$/.test(addr)
-
-  const fetchList = async () => {
-    if (!backend) return
-    try {
-      const res = await fetch(`${backend}/api/waitlist`)
-      const data = await res.json()
-      if (data?.ok) setItems(Array.isArray(data.items) ? data.items : [])
-    } catch (e) {
-      console.error(e)
-      setMessage('Failed to load waitlist. Please try again later.')
-    }
-  }
+  const [address, setAddress] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const base = useMemo(() => deriveBackendBase(), []);
 
   useEffect(() => {
-    fetchList()
-  }, [])
+    setError('');
+    setSuccess('');
+  }, [address]);
 
-  const connectWallet = async () => {
-    setMessage('')
-    if (hasPhantom) {
-      try {
-        const resp = await window.solana.connect({ onlyIfTrusted: false })
-        const addr = resp?.publicKey?.toString?.() || ''
-        if (addr) setConnectedAddress(addr)
-      } catch (e) {
-        setMessage('Wallet connection was closed or failed.')
-      }
-    } else {
-      setShowManual(true)
+  const connectPhantom = async () => {
+    setError('');
+    if (!window.solana || !window.solana.isPhantom) {
+      setError('Phantom Wallet tidak terdeteksi. Silakan install Phantom terlebih dahulu.');
+      return;
     }
-  }
-
-  const submitManual = () => {
-    const addr = manualAddress.trim()
-    if (!isValidSolana(addr)) {
-      setMessage('Invalid wallet address. Please enter a valid Solana (base58) address.')
-      return
-    }
-    setConnectedAddress(addr)
-    setShowManual(false)
-  }
-
-  const joinWaitlist = async () => {
-    if (!backend) {
-      setMessage('Server URL is not set. Please configure VITE_BACKEND_URL or ensure the backend is running on port 8000.')
-      return
-    }
-    if (!connectedAddress) {
-      setMessage('Please connect your wallet first or enter your address manually.')
-      return
-    }
-    if (!isValidSolana(connectedAddress)) {
-      setMessage('Invalid wallet address format.')
-      return
-    }
-    setLoading(true)
-    setMessage('')
     try {
-      const res = await fetch(`${backend}/api/waitlist`, {
+      const resp = await window.solana.connect();
+      const pubKey = resp.publicKey?.toString?.() || '';
+      if (!SOL_ADDRESS_RE.test(pubKey)) {
+        setError('Alamat wallet tidak valid.');
+        return;
+      }
+      setAddress(pubKey);
+    } catch (e) {
+      setError('Koneksi wallet dibatalkan.');
+    }
+  };
+
+  const submit = async (addr) => {
+    const value = (addr ?? address).trim();
+    if (!SOL_ADDRESS_RE.test(value)) {
+      setError('Masukkan alamat Solana yang valid.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch(`${base}/api/waitlist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address: connectedAddress, source: 'waitlist-section' }),
-      })
-      const data = await res.json()
-      if (res.ok && data?.ok) {
-        setMessage('Successfully joined the waitlist!')
-        fetchList()
-      } else {
-        setMessage(data?.detail || 'Failed to save. Please try again.')
+        body: JSON.stringify({ address: value, source: 'landing' }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        const msg = data?.detail || data?.message || 'Gagal menambahkan ke waitlist. Coba lagi.';
+        throw new Error(msg);
       }
+      setSuccess('Berhasil! Wallet Anda masuk ke waitlist.');
     } catch (e) {
-      setMessage('Network error. Please try again.')
+      setError(e.message || 'Terjadi kesalahan.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
-  const formatDate = (val) => {
-    try {
-      if (!val) return ''
-      // Support number or string date
-      const d = typeof val === 'number' ? new Date(val) : new Date(val)
-      if (Number.isNaN(d.getTime())) return ''
-      return d.toLocaleString()
-    } catch {
-      return ''
-    }
-  }
+  };
 
   return (
-    <section id="waitlist" className="mx-auto max-w-6xl px-4 py-16">
-      <div className="grid lg:grid-cols-2 gap-8 items-start">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-semibold text-white">Join the Waitlist</h2>
-          <p className="mt-3 text-zinc-300">
-            Get early access to Polytoly. Connect a wallet or enter your Solana address. Your address is stored securely on our server (not in browser cache).
-          </p>
+    <section id="waitlist" className="py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-2 gap-10 items-start">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-white">Join Waitlist</h2>
+            <p className="mt-3 text-white/70">Hubungkan wallet atau masukkan alamat Anda untuk bergabung.</p>
 
-          <div className="mt-6 space-y-4">
-            {!connectedAddress ? (
-              <div>
-                <GradientButton onClick={connectWallet}>Connect Wallet</GradientButton>
-                {!hasPhantom && (
-                  <p className="mt-2 text-xs text-zinc-500">No wallet detected. You can enter your address manually.</p>
-                )}
-              </div>
-            ) : (
-              <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-zinc-200">
-                <div className="flex items-center justify-between gap-3">
-                  <span>Connected: <span className="text-white font-medium">{connectedAddress}</span></span>
-                  <button onClick={() => setConnectedAddress('')} className="text-xs text-zinc-400 hover:text-white">Disconnect</button>
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+              <button onClick={connectPhantom} className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-500 hover:bg-violet-400 text-white px-4 py-3 text-sm font-medium">
+                <Wallet className="h-4 w-4" />
+                Connect Phantom
+              </button>
+              <div className="flex-1">
+                <div className="flex rounded-lg border border-white/10 bg-white/5 overflow-hidden">
+                  <input
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Atau tempel alamat Solana"
+                    className="w-full bg-transparent px-3 py-3 text-sm text-white placeholder:text-white/40 outline-none"
+                  />
+                  <button
+                    onClick={() => submit()}
+                    disabled={loading}
+                    className="px-4 bg-white/10 hover:bg-white/20 text-white text-sm disabled:opacity-50"
+                  >
+                    {loading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Mengirim</span> : 'Join'}
+                  </button>
                 </div>
               </div>
-            )}
-
-            {(!hasPhantom || showManual) && !connectedAddress && (
-              <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-                <label className="block text-xs text-zinc-400 mb-2">Enter Solana Address (base58)</label>
-                <input
-                  className="w-full rounded-md bg-black/40 border border-white/10 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-emerald-400/40"
-                  placeholder="e.g. 7Yh..."
-                  value={manualAddress}
-                  onChange={(e) => setManualAddress(e.target.value)}
-                />
-                <div className="mt-3 flex gap-2">
-                  <GradientButton onClick={submitManual}>Use This Address</GradientButton>
-                  {!hasPhantom && (
-                    <button onClick={() => setShowManual(false)} className="text-sm text-zinc-400 hover:text-white">Cancel</button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div>
-              <GradientButton onClick={joinWaitlist} disabled={loading} className={loading ? 'opacity-70 cursor-not-allowed' : ''}>
-                {loading ? 'Saving...' : 'Join Waitlist'}
-              </GradientButton>
-              {message && <p className="mt-2 text-sm text-zinc-300">{message}</p>}
-              {!backend && (
-                <p className="mt-2 text-xs text-red-400">Backend URL not detected. Set VITE_BACKEND_URL or run backend on port 8000.</p>
-              )}
             </div>
-          </div>
-        </div>
 
-        <div>
-          <h3 className="text-lg font-medium text-white">Waitlist (latest)</h3>
-          <p className="mt-1 text-sm text-zinc-400">Recently joined addresses, newest first.</p>
-          <div className="mt-4 space-y-3 max-h-[360px] overflow-auto pr-1">
-            {items.length === 0 ? (
-              <div className="text-sm text-zinc-500">No signups yet.</div>
-            ) : (
-              items.map((it) => (
-                <div key={it.id} className="rounded-md border border-white/10 bg-white/5 p-3 text-sm flex items-center justify-between">
-                  <span className="truncate mr-3">{it.address}</span>
-                  <span className="text-xs text-zinc-500">{formatDate(it.created_at)}</span>
-                </div>
-              ))
+            {error && (
+              <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 text-red-200 px-4 py-3 text-sm">{error}</div>
             )}
+            {success && (
+              <div className="mt-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 px-4 py-3 text-sm">{success}</div>
+            )}
+
+            <p className="mt-6 text-xs text-white/50">Dengan menekan Join, Anda menyetujui kami menyimpan alamat untuk keperluan akses beta.</p>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+            <h3 className="text-white font-medium">Apa yang terjadi setelah Anda connect?</h3>
+            <ol className="mt-4 space-y-3 text-sm text-white/70 list-decimal pl-5">
+              <li>Kami memverifikasi format alamat Solana Anda.</li>
+              <li>Alamat ditambahkan ke daftar tunggu secara aman.</li>
+              <li>Anda akan mendapat pemberitahuan saat giliran Anda.</li>
+            </ol>
+            <p className="mt-4 text-white/60 text-sm">Jika wallet gagal terhubung, Anda bisa menempel alamat secara manual di kolom di samping.</p>
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }
