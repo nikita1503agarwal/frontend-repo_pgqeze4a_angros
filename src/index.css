@@ -15,6 +15,10 @@
   html {
     font-family: var(--font-sans);
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Smooth anchor scrolling across the site */
+    scroll-behavior: smooth;
+    /* Prevent content from hiding under the fixed navbar (h-16 => 4rem) */
+    scroll-padding-top: 4rem;
   }
 
   body {
