@@ -15,20 +15,22 @@ export default function Navbar() {
           <nav className="hidden md:flex items-center gap-8 text-sm text-white/80">
             <a href="#how" className="hover:text-white transition">How it works</a>
             <a href="#why" className="hover:text-white transition">Why Solana</a>
+            <a href="#integrations" className="hover:text-white transition">Integrations</a>
             <a href="#waitlist" className="hover:text-white transition">Waitlist</a>
             <a href="#faq" className="hover:text-white transition">FAQ</a>
           </nav>
-          <button onClick={() => setOpen(!open)} className="md:hidden text-white/90 p-2 rounded hover:bg-white/10">
+          <button onClick={() => setOpen(!open)} className="md:hidden text-white/90 p-2 rounded hover:bg-white/10" aria-label="Toggle menu">
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
         {open && (
           <div className="md:hidden pb-4">
             <nav className="grid gap-2 text-sm text-white/80">
-              <a href="#how" className="hover:text-white transition">How it works</a>
-              <a href="#why" className="hover:text-white transition">Why Solana</a>
-              <a href="#waitlist" className="hover:text-white transition">Waitlist</a>
-              <a href="#faq" className="hover:text-white transition">FAQ</a>
+              <a href="#how" className="hover:text-white transition" onClick={() => setOpen(false)}>How it works</a>
+              <a href="#why" className="hover:text-white transition" onClick={() => setOpen(false)}>Why Solana</a>
+              <a href="#integrations" className="hover:text-white transition" onClick={() => setOpen(false)}>Integrations</a>
+              <a href="#waitlist" className="hover:text-white transition" onClick={() => setOpen(false)}>Waitlist</a>
+              <a href="#faq" className="hover:text-white transition" onClick={() => setOpen(false)}>FAQ</a>
             </nav>
           </div>
         )}
