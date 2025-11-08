@@ -22,7 +22,7 @@ const markets = [
   },
 ]
 
-function GradientButton({ children, className = '', href = '#cta' }) {
+function GradientButton({ children, className = '', href = '#waitlist' }) {
   return (
     <a
       href={href}
@@ -41,7 +41,7 @@ export default function Hero() {
       </div>
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-black/60 to-black/90" />
 
-      <div className="relative mx-auto max-w-6xl px-4 pt-28 pb-20 grid lg:grid-cols-2 gap-10 items-center">
+      <div className="relative mx-auto max-w-6xl px-4 pt-28 pb-12 grid lg:grid-cols-2 gap-10 items-center">
         <div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-white">
             Polytoly — Simple Prediction Markets on Solana
@@ -50,7 +50,7 @@ export default function Hero() {
             Trade YES/NO on real-world events with fast, low-fee transactions powered by Solana.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
-            <GradientButton className="pointer-events-auto">Launch App</GradientButton>
+            <GradientButton className="pointer-events-auto">Join Waitlist</GradientButton>
             <a href="#markets" className="pointer-events-auto inline-flex items-center justify-center rounded-md px-5 py-3 text-sm font-medium text-white/80 hover:text-white border border-white/10">
               View Markets
             </a>

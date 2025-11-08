@@ -8,13 +8,13 @@ export default function Navbar() {
         <nav className="hidden sm:flex items-center gap-6 text-sm">
           <a href="#markets" className="text-zinc-300 hover:text-white transition-colors">Markets</a>
           <a href="#how" className="text-zinc-300 hover:text-white transition-colors">How it Works</a>
-          <a href="#cta" className="inline-flex items-center px-3 py-1.5 rounded-md font-medium text-white bg-gradient-to-r from-[#9945FF] via-[#14F195] to-[#00D18C] hover:opacity-90 transition-opacity">
-            Launch App
+          <a href="#waitlist" className="inline-flex items-center px-3 py-1.5 rounded-md font-medium text-white bg-gradient-to-r from-[#9945FF] via-[#14F195] to-[#00D18C] hover:opacity-90 transition-opacity">
+            Join Waitlist
           </a>
         </nav>
         <div className="sm:hidden">
-          <a href="#cta" className="inline-flex items-center px-3 py-1.5 rounded-md font-medium text-white bg-gradient-to-r from-[#9945FF] via-[#14F195] to-[#00D18C] hover:opacity-90 transition-opacity">
-            Launch
+          <a href="#waitlist" className="inline-flex items-center px-3 py-1.5 rounded-md font-medium text-white bg-gradient-to-r from-[#9945FF] via-[#14F195] to-[#00D18C] hover:opacity-90 transition-opacity">
+            Waitlist
           </a>
         </div>
       </div>
